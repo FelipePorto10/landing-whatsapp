@@ -83,6 +83,17 @@
       <div id="btn-skel" class="skeleton h-14 w-full rounded-xl"></div>
     </div>
 
+    <div class="mt-5">
+      <button id="manual-toggle" type="button" class="text-xs text-gray-500 hover:text-gray-300 transition underline-offset-4 hover:underline">
+        Não é o seu estado? <span class="text-gray-300">Escolher manualmente</span>
+      </button>
+      <div id="manual-picker" class="hidden mt-3 fade-in">
+        <select id="manual-select" aria-label="Selecione seu estado" class="w-full bg-white/5 border border-white/10 text-white text-sm rounded-lg px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-green-500/40 transition cursor-pointer">
+          <option value="">— Selecione seu estado —</option>
+        </select>
+      </div>
+    </div>
+
     <p class="mt-8 text-[11px] uppercase tracking-widest text-gray-500">Resposta em minutos</p>
   </section>
 </main>
@@ -180,6 +191,16 @@ const CONFIG_WHATSAPP = {
 const CACHE_KEY = 'wpp_state_v3';
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const API_TIMEOUT_MS = 3000;
+
+const TODOS_OS_ESTADOS = {
+  AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas',
+  BA: 'Bahia', CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo',
+  GO: 'Goiás', MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul',
+  MG: 'Minas Gerais', PA: 'Pará', PB: 'Paraíba', PR: 'Paraná',
+  PE: 'Pernambuco', PI: 'Piauí', RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte',
+  RS: 'Rio Grande do Sul', RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina',
+  SP: 'São Paulo', SE: 'Sergipe', TO: 'Tocantins'
+};
 
 const ESTADO_TO_UF = {
   'acre': 'AC', 'alagoas': 'AL', 'amapa': 'AP', 'amazonas': 'AM',
@@ -292,7 +313,7 @@ function render(uf) {
   sub.classList.remove('hidden');
   sub.classList.add('fade-in');
 
-  if (btnSkel) btnSkel.remove();
+  btnWrap.innerHTML = '';
   cfg.cidades.forEach((cidade, idx) => {
     if (!cidade.numeros || !cidade.numeros.length) return;
     const numero = pickNumero(cidade.numeros);
@@ -318,8 +339,42 @@ function render(uf) {
   });
 }
 
+function initManualPicker() {
+  const toggle = document.getElementById('manual-toggle');
+  const picker = document.getElementById('manual-picker');
+  const select = document.getElementById('manual-select');
+  if (!toggle || !picker || !select) return;
+
+  Object.keys(TODOS_OS_ESTADOS)
+    .sort((a, b) => TODOS_OS_ESTADOS[a].localeCompare(TODOS_OS_ESTADOS[b], 'pt-BR'))
+    .forEach(uf => {
+      const opt = document.createElement('option');
+      opt.value = uf;
+      opt.textContent = TODOS_OS_ESTADOS[uf] + ' (' + uf + ')';
+      select.appendChild(opt);
+    });
+
+  toggle.addEventListener('click', () => {
+    picker.classList.toggle('hidden');
+    if (!picker.classList.contains('hidden')) {
+      setTimeout(() => select.focus(), 50);
+    }
+  });
+
+  select.addEventListener('change', (e) => {
+    const uf = e.target.value;
+    if (!uf) return;
+    console.info('[WPP] Estado escolhido manualmente: ' + uf);
+    writeCache(uf);
+    render(uf);
+    picker.classList.add('hidden');
+    select.value = '';
+  });
+}
+
 async function init() {
   document.getElementById('year').textContent = new Date().getFullYear();
+  initManualPicker();
 
   const params = new URLSearchParams(window.location.search);
   if (params.has('refresh') || params.has('nocache')) {
@@ -335,7 +390,7 @@ async function init() {
   }
 
   const cached = readCache();
-  if (cached && CONFIG_WHATSAPP[cached]) {
+  if (cached && TODOS_OS_ESTADOS[cached]) {
     console.info('[WPP] Estado lido do cache: ' + cached);
     render(cached);
     return;
