@@ -94,7 +94,7 @@
 <script>
 const CONFIG_WHATSAPP = {
   BA: {
-    estado: 'Bahia',
+    estado: 'Bahia', preposicao: 'na',
     cidades: [
       { nome: 'Salvador',             marca: 'Credit Interest',   numeros: ['5571999629815', '5571999545835'] },
       { nome: 'Feira de Santana',     marca: 'Fênix Financeira',  numeros: ['5575998528245', '5575998767322'] },
@@ -102,68 +102,68 @@ const CONFIG_WHATSAPP = {
     ]
   },
   PR: {
-    estado: 'Paraná',
+    estado: 'Paraná', preposicao: 'no',
     cidades: [
       { nome: 'Curitiba', marca: 'Gaviões Financeira', numeros: ['5541991465873', '5541992705387'] }
     ]
   },
   AL: {
-    estado: 'Alagoas',
+    estado: 'Alagoas', preposicao: 'em',
     cidades: [
       { nome: 'Maceió', marca: 'Fênix Financeira', numeros: ['5582987349518', '5582988482679'] }
     ]
   },
   PB: {
-    estado: 'Paraíba',
+    estado: 'Paraíba', preposicao: 'na',
     cidades: [
       { nome: 'João Pessoa', marca: 'Fênix Financeira', numeros: ['5583988008804', '5583988136418'] }
     ]
   },
   MA: {
-    estado: 'Maranhão',
+    estado: 'Maranhão', preposicao: 'no',
     cidades: [
       { nome: 'São Luís', marca: 'Falcão Financeira', numeros: ['5598999838761', '5598989141433'] }
     ]
   },
   GO: {
-    estado: 'Goiás',
+    estado: 'Goiás', preposicao: 'em',
     cidades: [
       { nome: 'Goiânia',  marca: 'GO Credito', numeros: ['5562998821095', '5562998195305'] },
       { nome: 'Anápolis', marca: 'Anap Cred',  numeros: ['5562999804508', '5562996198162'] }
     ]
   },
   DF: {
-    estado: 'Distrito Federal',
+    estado: 'Distrito Federal', preposicao: 'no',
     cidades: [
       { nome: 'Brasília', marca: 'BSB Financeira', numeros: ['5561999326083', '5561999529395'] }
     ]
   },
   PE: {
-    estado: 'Pernambuco',
+    estado: 'Pernambuco', preposicao: 'em',
     cidades: [
       { nome: 'Recife', marca: 'Falcão Financeira', numeros: ['5581981546311', '5581985257960'] }
     ]
   },
   SE: {
-    estado: 'Sergipe',
+    estado: 'Sergipe', preposicao: 'em',
     cidades: [
       { nome: 'Aracaju', marca: 'Fênix Financeira', numeros: ['5579999207954', '5579996456445'] }
     ]
   },
   CE: {
-    estado: 'Ceará',
+    estado: 'Ceará', preposicao: 'no',
     cidades: [
       { nome: 'Fortaleza', marca: 'Fênix Financeira', numeros: ['5585986155519', '5585984217189'] }
     ]
   },
   MG: {
-    estado: 'Minas Gerais',
+    estado: 'Minas Gerais', preposicao: 'em',
     cidades: [
       { nome: 'Belo Horizonte', marca: 'Fênix Financeira', numeros: ['5531996952138', '5531998915606'] }
     ]
   },
   AM: {
-    estado: 'Amazonas',
+    estado: 'Amazonas', preposicao: 'no',
     cidades: [
       { nome: 'Manaus', marca: 'Falcão Financeiro', numeros: ['5592991710281', '5592991952235'] }
     ]
@@ -287,7 +287,7 @@ function render(uf) {
 
   sub.textContent = isFallback
     ? 'Fale com o nosso atendimento agora'
-    : 'Fale com o nosso atendimento em ' + cfg.estado;
+    : 'Fale com o nosso atendimento ' + (cfg.preposicao || 'em') + ' ' + cfg.estado;
   if (subSkel) subSkel.remove();
   sub.classList.remove('hidden');
   sub.classList.add('fade-in');
