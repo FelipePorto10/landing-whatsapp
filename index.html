@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<meta name="description" content="Atendimento rápido via WhatsApp">
+<title>Atendimento WhatsApp</title>
+<link rel="preconnect" href="https://ipapi.co" crossorigin>
+<link rel="dns-prefetch" href="https://wa.me">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { color-scheme: dark; }
+  html, body { background-color: #000000; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+  .glass {
+    background: rgba(255, 255, 255, 0.025);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .orb {
+    position: absolute;
+    width: 380px; height: 380px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(37,211,102,0.10) 0%, transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wpp-btn {
+    background: linear-gradient(135deg, #25D366 0%, #1FAD55 100%);
+    transition: transform .25s cubic-bezier(.4,0,.2,1), box-shadow .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 6px 24px -6px rgba(37, 211, 102, 0.45), inset 0 1px 0 rgba(255,255,255,0.18);
+    will-change: transform;
+  }
+  .wpp-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 32px -6px rgba(37, 211, 102, 0.55), inset 0 1px 0 rgba(255,255,255,0.22); }
+  .wpp-btn:active { transform: translateY(0); }
+  .wpp-btn:focus-visible { outline: 2px solid #25D366; outline-offset: 3px; }
+  .skeleton {
+    position: relative;
+    overflow: hidden;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .skeleton::after {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.06) 50%, transparent 100%);
+    transform: translateX(-100%);
+    animation: shimmer 1.6s infinite;
+  }
+  @keyframes shimmer { 100% { transform: translateX(100%); } }
+  .fade-in { animation: fadeIn .45s ease-out both; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .accent-bar { background: linear-gradient(90deg, transparent, #25D366, transparent); }
+</style>
+</head>
+<body class="min-h-screen flex flex-col relative overflow-x-hidden">
+
+<div class="orb" style="top: -120px; left: -120px;"></div>
+<div class="orb" style="bottom: -140px; right: -120px;"></div>
+
+<main class="relative z-10 flex-1 flex items-center justify-center px-5 py-10">
+  <section class="glass rounded-2xl w-full max-w-md px-7 py-10 md:px-10 md:py-12 text-center fade-in">
+
+    <header class="mb-7">
+      <h1 id="brand-title" class="text-3xl md:text-4xl font-bold tracking-tight text-white">FÊNIX FINANCEIRA</h1>
+      <div class="accent-bar h-px w-20 mx-auto mt-4"></div>
+    </header>
+
+    <div id="subtitle-wrap" class="mb-8 min-h-[3.25rem] flex items-center justify-center">
+      <div id="subtitle-skel" class="skeleton h-5 w-3/4 rounded"></div>
+      <p id="subtitle" class="hidden text-gray-300 text-base md:text-lg leading-relaxed"></p>
+    </div>
+
+    <div id="btn-wrap" class="space-y-3">
+      <div id="btn-skel" class="skeleton h-14 w-full rounded-xl"></div>
+    </div>
+
+    <p class="mt-8 text-[11px] uppercase tracking-widest text-gray-500">Resposta em minutos</p>
+  </section>
+</main>
+
+<footer class="relative z-10 py-6 text-center text-gray-600 text-xs px-4">
+  &copy; <span id="year"></span> <span id="brand-footer">FÊNIX FINANCEIRA</span>. Todos os direitos reservados.
+</footer>
+
+<script>
+const CONFIG_WHATSAPP = {
+  BA: {
+    estado: 'Bahia',
+    cidades: [
+      { nome: 'Salvador',             marca: 'Credit Interest',   numeros: ['5571999629815', '5571999545835'] },
+      { nome: 'Feira de Santana',     marca: 'Fênix Financeira',  numeros: ['5575998528245', '5575998767322'] },
+      { nome: 'Vitória da Conquista', marca: 'Falcão Financeiro', numeros: ['5577998590990', '5577998360059'] }
+    ]
+  },
+  PR: {
+    estado: 'Paraná',
+    cidades: [
+      { nome: 'Curitiba', marca: 'Gaviões Financeira', numeros: ['5541991465873', '5541992705387'] }
+    ]
+  },
+  AL: {
+    estado: 'Alagoas',
+    cidades: [
+      { nome: 'Maceió', marca: 'Fênix Financeira', numeros: ['5582987349518', '5582988482679'] }
+    ]
+  },
+  PB: {
+    estado: 'Paraíba',
+    cidades: [
+      { nome: 'João Pessoa', marca: 'Fênix Financeira', numeros: ['5583988008804', '5583988136418'] }
+    ]
+  },
+  MA: {
+    estado: 'Maranhão',
+    cidades: [
+      { nome: 'São Luís', marca: 'Falcão Financeira', numeros: ['5598999838761', '5598989141433'] }
+    ]
+  },
+  GO: {
+    estado: 'Goiás',
+    cidades: [
+      { nome: 'Goiânia',  marca: 'GO Credito', numeros: ['5562998821095', '5562998195305'] },
+      { nome: 'Anápolis', marca: 'Anap Cred',  numeros: ['5562999804508', '5562996198162'] }
+    ]
+  },
+  DF: {
+    estado: 'Distrito Federal',
+    cidades: [
+      { nome: 'Brasília', marca: 'BSB Financeira', numeros: ['5561999326083', '5561999529395'] }
+    ]
+  },
+  PE: {
+    estado: 'Pernambuco',
+    cidades: [
+      { nome: 'Recife', marca: 'Falcão Financeira', numeros: ['5581981546311', '5581985257960'] }
+    ]
+  },
+  SE: {
+    estado: 'Sergipe',
+    cidades: [
+      { nome: 'Aracaju', marca: 'Fênix Financeira', numeros: ['5579999207954', '5579996456445'] }
+    ]
+  },
+  CE: {
+    estado: 'Ceará',
+    cidades: [
+      { nome: 'Fortaleza', marca: 'Fênix Financeira', numeros: ['5585986155519', '5585984217189'] }
+    ]
+  },
+  MG: {
+    estado: 'Minas Gerais',
+    cidades: [
+      { nome: 'Belo Horizonte', marca: 'Fênix Financeira', numeros: ['5531996952138', '5531998915606'] }
+    ]
+  },
+  AM: {
+    estado: 'Amazonas',
+    cidades: [
+      { nome: 'Manaus', marca: 'Falcão Financeiro', numeros: ['5592991710281', '5592991952235'] }
+    ]
+  },
+  DEFAULT: {
+    estado: 'Brasil',
+    marca: 'FÊNIX FINANCEIRA',
+    cidades: [
+      { nome: 'Geral', numeros: ['5571999629815'], mensagem: 'Olá! Gostaria de mais informações' }
+    ]
+  }
+};
+
+const CACHE_KEY = 'wpp_state_v3';
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+const API_TIMEOUT_MS = 3000;
+
+const ESTADO_TO_UF = {
+  'acre': 'AC', 'alagoas': 'AL', 'amapa': 'AP', 'amazonas': 'AM',
+  'bahia': 'BA', 'ceara': 'CE', 'distrito federal': 'DF', 'espirito santo': 'ES',
+  'goias': 'GO', 'maranhao': 'MA', 'mato grosso': 'MT', 'mato grosso do sul': 'MS',
+  'minas gerais': 'MG', 'para': 'PA', 'paraiba': 'PB', 'parana': 'PR',
+  'pernambuco': 'PE', 'piaui': 'PI', 'rio de janeiro': 'RJ', 'rio grande do norte': 'RN',
+  'rio grande do sul': 'RS', 'rondonia': 'RO', 'roraima': 'RR', 'santa catarina': 'SC',
+  'sao paulo': 'SP', 'sergipe': 'SE', 'tocantins': 'TO'
+};
+
+function normalizeName(s) {
+  const str = (s == null ? '' : String(s)).toLowerCase().normalize('NFD');
+  let out = '';
+  for (let i = 0; i < str.length; i++) {
+    const cp = str.charCodeAt(i);
+    if (cp < 0x0300 || cp > 0x036F) out += str[i];
+  }
+  return out.replace(/^state of\s+/, '').replace(/\s+state$/, '').trim();
+}
+
+function pickUF(code, name) {
+  if (typeof code === 'string') {
+    const c = code.trim().toUpperCase();
+    if (/^[A-Z]{2}$/.test(c)) return c;
+  }
+  return ESTADO_TO_UF[normalizeName(name)] || '';
+}
+
+const GEO_SOURCES = [
+  { url: 'https://ipapi.co/json/',              map: d => ({ uf: pickUF(d && d.region_code, d && d.region),     country: (d && d.country)       || '' }) },
+  { url: 'https://ipwho.is/',                   map: d => ({ uf: pickUF(d && d.region_code, d && d.region),     country: (d && d.country_code)  || '' }) },
+  { url: 'https://freeipapi.com/api/json/',     map: d => ({ uf: pickUF('',                  d && d.regionName), country: (d && d.countryCode)   || '' }) },
+  { url: 'https://get.geojs.io/v1/ip/geo.json', map: d => ({ uf: pickUF('',                  d && d.region),     country: (d && d.country_code)  || '' }) }
+];
+
+const WPP_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" class="w-6 h-6 flex-shrink-0"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>';
+
+function readCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    if (!obj || !obj.uf || !obj.ts) return null;
+    if (Date.now() - obj.ts > CACHE_TTL_MS) {
+      localStorage.removeItem(CACHE_KEY);
+      return null;
+    }
+    return obj.uf;
+  } catch (_) { return null; }
+}
+
+function writeCache(uf) {
+  try { localStorage.setItem(CACHE_KEY, JSON.stringify({ uf, ts: Date.now() })); } catch (_) {}
+}
+
+function fetchWithTimeout(url, ms) {
+  return new Promise((resolve, reject) => {
+    const ctrl = ('AbortController' in window) ? new AbortController() : null;
+    const t = setTimeout(() => { if (ctrl) ctrl.abort(); reject(new Error('timeout')); }, ms);
+    fetch(url, ctrl ? { signal: ctrl.signal } : {})
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('http_' + r.status)))
+      .then(data => { clearTimeout(t); resolve(data); })
+      .catch(err => { clearTimeout(t); reject(err); });
+  });
+}
+
+function fetchGeoRace() {
+  const attempts = GEO_SOURCES.map(src =>
+    fetchWithTimeout(src.url, API_TIMEOUT_MS).then(data => {
+      const r = src.map(data);
+      if (!r.uf || !r.country) throw new Error('empty:' + src.url);
+      r.source = src.url;
+      return r;
+    })
+  );
+  return Promise.any(attempts);
+}
+
+function pickNumero(numeros) {
+  return numeros[Math.floor(Math.random() * numeros.length)];
+}
+
+function buildLink(numero, cidade) {
+  const text = cidade.mensagem || ('Olá! Tenho interesse no empréstimo - ' + cidade.nome);
+  return 'https://wa.me/' + numero + '?text=' + encodeURIComponent(text);
+}
+
+function render(uf) {
+  const cfg = CONFIG_WHATSAPP[uf] || CONFIG_WHATSAPP.DEFAULT;
+  const isFallback = !CONFIG_WHATSAPP[uf];
+
+  const subSkel = document.getElementById('subtitle-skel');
+  const sub = document.getElementById('subtitle');
+  const btnSkel = document.getElementById('btn-skel');
+  const btnWrap = document.getElementById('btn-wrap');
+  const brandTitle = document.getElementById('brand-title');
+  const brandFooter = document.getElementById('brand-footer');
+
+  const primaryMarca = cfg.marca || (cfg.cidades[0] && cfg.cidades[0].marca);
+  if (primaryMarca) {
+    if (brandTitle) brandTitle.textContent = primaryMarca;
+    if (brandFooter) brandFooter.textContent = primaryMarca;
+  }
+
+  sub.textContent = isFallback
+    ? 'Fale com o nosso atendimento agora'
+    : 'Fale com o nosso atendimento em ' + cfg.estado;
+  if (subSkel) subSkel.remove();
+  sub.classList.remove('hidden');
+  sub.classList.add('fade-in');
+
+  if (btnSkel) btnSkel.remove();
+  cfg.cidades.forEach((cidade, idx) => {
+    if (!cidade.numeros || !cidade.numeros.length) return;
+    const numero = pickNumero(cidade.numeros);
+    const a = document.createElement('a');
+    a.href = buildLink(numero, cidade);
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'wpp-btn fade-in flex items-center justify-center gap-3 w-full py-3.5 px-6 rounded-xl text-white';
+    a.style.animationDelay = (idx * 80) + 'ms';
+    if (cidade.marca && cidade.nome !== 'Geral') {
+      a.setAttribute('aria-label', cidade.marca + ' - ' + cidade.nome);
+      a.innerHTML = WPP_ICON +
+        '<span class="flex flex-col items-start leading-tight text-left">' +
+          '<span class="font-semibold text-base md:text-lg">' + cidade.marca + '</span>' +
+          '<span class="text-[11px] md:text-xs opacity-80 font-normal">' + cidade.nome + '</span>' +
+        '</span>';
+    } else {
+      const label = cidade.marca || ('Atendimento ' + cidade.nome);
+      a.setAttribute('aria-label', label);
+      a.innerHTML = WPP_ICON + '<span class="font-semibold text-base md:text-lg">' + label + '</span>';
+    }
+    btnWrap.appendChild(a);
+  });
+}
+
+async function init() {
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('refresh') || params.has('nocache')) {
+    try { localStorage.removeItem(CACHE_KEY); } catch (_) {}
+    console.info('[WPP] Cache limpo via URL');
+  }
+
+  const ufOverride = (params.get('uf') || '').toUpperCase();
+  if (ufOverride) {
+    console.info('[WPP] Override manual via URL: uf=' + ufOverride);
+    render(ufOverride);
+    return;
+  }
+
+  const cached = readCache();
+  if (cached && CONFIG_WHATSAPP[cached]) {
+    console.info('[WPP] Estado lido do cache: ' + cached);
+    render(cached);
+    return;
+  }
+
+  try {
+    const geo = await fetchGeoRace();
+    console.info('[WPP] Geo resolvido via ' + geo.source + ' — uf="' + geo.uf + '", country="' + geo.country + '"');
+    const uf = (geo.uf || '').toUpperCase();
+    const country = (geo.country || '').toUpperCase();
+    if (uf && country === 'BR' && CONFIG_WHATSAPP[uf]) {
+      console.info('[WPP] Estado detectado: ' + uf);
+      writeCache(uf);
+      render(uf);
+    } else {
+      console.warn('[WPP] Caiu no DEFAULT — uf="' + uf + '", country="' + country + '", mapeado=' + !!CONFIG_WHATSAPP[uf]);
+      render('DEFAULT');
+    }
+  } catch (e) {
+    console.error('[WPP] Todas as APIs de geolocalização falharam:', e && e.errors ? e.errors.map(x => x.message) : (e && e.message ? e.message : e));
+    render('DEFAULT');
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+</script>
+</body>
+</html>
